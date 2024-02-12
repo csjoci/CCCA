@@ -1,10 +1,16 @@
 // @ts-nocheck
-function clean(cpf: string) {
-  return cpf
-    .replace(".", "")
-    .replace(".", "")
-    .replace("-", "")
-    .replace(" ", "");
+export function validateCpf(rawCpf: any) {
+  if (!rawCpf) return false;
+  const cpf = removeNonDigits(rawCpf);
+  if (isInvalidCpf(cpf)) return false;
+  if (hasAllDigitsEqual(cpf)) return false;
+  const digit1 = calculateDigit(cpf, 10);
+  const digit2 = calculateDigit(cpf, 11);
+  return extractLastDigits(cpf) === `${digit1}${digit2}`;
+}
+
+function removeNonDigits(cpf: string) {
+  return cpf.replace(/\D/g, "");
 }
 
 function isInvalidCpf(cpf: string) {
@@ -12,31 +18,21 @@ function isInvalidCpf(cpf: string) {
 }
 
 function hasAllDigitsEqual(cpf: string) {
-  return cpf.split("").every((c) => c === cpf[0]);
+  const [firstCpfDigit] = cpf;
+  return [...cpf].every((digit) => digit === firstCpfDigit);
+}
+
+function calculateDigit(cpf: string, factor: number) {
+  let total = 0;
+  for (const digit of cpf) {
+    if (factor > 1) total += parseInt(digit) * factor--;
+  }
+  const rest = total % 11;
+  return rest < 2 ? 0 : 11 - rest;
 }
 
 function extractLastDigits(cpf: string) {
-  return cpf.substring(cpf.length - 2, cpf.length);
-}
-
-export function validateCpf(cpf: any) {
-  if (!cpf) return false;
-  cpf = clean(cpf);
-  if (isInvalidCpf(cpf)) return false;
-  if (hasAllDigitsEqual(cpf)) return false;
-  let d1 = 0;
-  let d2 = 0;
-  for (let nCount = 1; nCount < cpf.length - 1; nCount++) {
-    const digito = parseInt(cpf.substring(nCount - 1, nCount));
-    d1 = d1 + (11 - nCount) * digito;
-    d2 = d2 + (12 - nCount) * digito;
-  }
-  let rest = d1 % 11;
-  const dg1 = rest < 2 ? 0 : 11 - rest;
-  d2 += 2 * dg1;
-  rest = d2 % 11;
-  const dg2 = rest < 2 ? 0 : 11 - rest;
-  return extractLastDigits(cpf) === `${dg1}${dg2}`;
+  return cpf.slice(9);
 }
 
 // se nao variavel = 0, false, undefined, null, "", NaN
